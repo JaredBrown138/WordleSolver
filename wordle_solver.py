@@ -22,10 +22,20 @@ class Solver():
         "verified_invalid_values": []
     }
 
-    def __init__(self, verbose_printing=False):
-        self._load_wordle_words()
+    def __init__(self, verbose_printing=False, starting_word=None, words=None):
+
+        if words is None:
+            self._load_wordle_words()
+        else:
+            self.words = words
+
         self.total_word_count = len(self.words)
-        self.current_guess = random.choice(self.words)
+
+        if starting_word is None:
+            self.current_guess = random.choice(self.words)
+        else:
+            self.current_guess = starting_word
+
         self.verbose_printing = verbose_printing
 
     def _load_wordle_words(self):
@@ -115,11 +125,11 @@ class Solver():
         based on the response feedback"""
 
         if len(response) != 5:
-            return f"Response should contain 5 characters!"
+            return (False, f"Response should contain 5 characters!")
 
         for char in response:
             if char not in self.VALID_RESPONSE_CHARS:
-                return f"Response contains invalid character: {char}"
+                return (False, f"Response contains invalid character: {char}")
 
         self._update_evaluation_state(response)
         self._filter_words()
@@ -128,11 +138,11 @@ class Solver():
 
         if len(self.words) == 1:
             self.solve_completed = True
-            return f"Answer: {self.words[0]}"
+            return (True, self.words[0])
 
         if len(self.words) < 1:
             self.solve_completed = True
-            return "Could not arrive at solution"
+            return (True, "Could not arrive at solution")
 
         self.current_guess = self.words[0]
-        return self.current_guess
+        return (False, self.current_guess)

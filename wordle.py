@@ -18,7 +18,7 @@ def main():
 
     while not solver.solve_completed:
         response = input("")
-        print(solver.process_response(response))
+        print(solver.process_response(response)[1])
 
 
 if __name__ == "__main__":

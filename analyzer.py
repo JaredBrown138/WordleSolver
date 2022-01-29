@@ -2,6 +2,9 @@ from wordle_solver import Solver
 from wordle_challenge import Challenge
 import csv
 
+from tqdm import tqdm
+
+
 def main():
 
     print("""
@@ -18,11 +21,11 @@ def main():
 
     total_words = len(words)
 
-    for starting_word in words:
+    for starting_word in tqdm(words):
 
         successes = 0
 
-        for answer in words:
+        for answer in tqdm(words):
 
             success = False
             tries = 6
@@ -43,7 +46,7 @@ def main():
                     if end:
                         challenge.game_over = True
 
-            print(f"{success} in {tries} tries")
+            # print(f"{success} in {tries} tries")
             if success:
                 successes = successes + 1
 

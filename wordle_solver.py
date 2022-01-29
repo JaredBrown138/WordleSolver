@@ -1,6 +1,6 @@
 import csv
 import random
-
+import time
 
 class Solver():
     """Represents a solving instance. This includes the data
@@ -66,8 +66,28 @@ class Solver():
             verified_chars = [c for c, i in self.evaluation_state["verified_values"]]
             self.evaluation_state["invalid_chars"] = [c for c in self.evaluation_state["invalid_chars"] if c not in verified_chars]
 
+    def _contains_valid_letter(self, word, valid_chars):
+        for char in valid_chars:
+            if char not in word:
+                return False
+        return True
+
+    def _contains_invalid_letter(self, word, invalid_chars):
+        for char in invalid_chars:
+            if char in word:
+                return True
+        return False
+
+    def _contains_valid_char_pos(self, word, char_pos_list):
+        word_char_pos_list = [(c, i) for i, c in enumerate(word)]
+        for char_pos in char_pos_list:
+            if char_pos not in word_char_pos_list:
+                return False
+        return True
+
     def _filter_words(self):
-        """Filters words in the words list using the evaluation state"""
+
+        # start = time.time()
 
         potential_words = []
 
@@ -75,50 +95,18 @@ class Solver():
         valid_chars = valid_chars + self.evaluation_state['valid_chars']
         valid_chars = valid_chars + [c for (c, i) in self.evaluation_state['verified_values']]
 
-        # Filter out words with invalid chars
-        for word in self.words:
-            valid = True
-            for index, char in enumerate(word):
+        # We might have a so called invalid character (grey) even if that letter
+        # is locked in (green) somewhere else in the word, in that case ignore it.
+        # the lock in takes precedent.
+        invalid_chars = [char for char in self.evaluation_state['invalid_chars'] if char not in valid_chars]
 
-                # If the character is invalid and isn't locked in rule out all words with it
-                if char in self.evaluation_state['invalid_chars'] and char not in valid_chars:
-                    valid = False
+        potential_words = [word for word in self.words if self._contains_valid_letter(word, valid_chars)]
+        potential_words = [word for word in potential_words if self._contains_valid_char_pos(word, self.evaluation_state['verified_values'])]
+        potential_words = [word for word in potential_words if not self._contains_invalid_letter(word, invalid_chars)]
 
-                # Rule out if char not in right place
-                if char in self.evaluation_state['invalid_chars'] and char in valid_chars:
-                    if (char, index) not in self.evaluation_state['verified_values']:
-                        valid = False
-
-            if valid:
-                potential_words.append(word)
-
-        # Filter out words that don't contain valid chars
-        invalid_words = []
-        for word in potential_words:
-            chars = [c for c in word]
-            for char in self.evaluation_state['valid_chars']:
-                if char not in chars:
-                    invalid_words.append(word)
-
-        potential_words = [p for p in potential_words if p not in invalid_words]
-
-        # Filter for verified chars
-        for word in potential_words:
-            for verified_char in self.evaluation_state["verified_values"]:
-                if word[verified_char[1]] != verified_char[0]:
-                    invalid_words.append(word)
-
-        potential_words = [p for p in potential_words if p not in invalid_words]
-
-        # Filter for valid chars, but that we know must be elsewhere
-        # (prevents constantly repeating these characters in same index)
-        for word in potential_words:
-            for verified_not_char in self.evaluation_state["verified_invalid_values"]:
-                if word[verified_not_char[1]] == verified_not_char[0]:
-                        invalid_words.append(word)
-
-        potential_words = [p for p in potential_words if p not in invalid_words]
         self.words = potential_words
+
+        # print(f"Filter took {time.time() - start} seconds")
 
     def process_response(self, response):
         """Evaluate the response string and start filtering
@@ -134,7 +122,7 @@ class Solver():
         self._update_evaluation_state(response)
         self._filter_words()
 
-        print(f"Matching Words: {len(self.words)}/{self.total_word_count}")
+        # print(f"Matching Words: {len(self.words)}/{self.total_word_count}")
 
         if len(self.words) == 1:
             self.solve_completed = True

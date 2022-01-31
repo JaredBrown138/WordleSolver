@@ -103,6 +103,7 @@ class Solver():
         potential_words = [word for word in self.words if self._contains_valid_letter(word, valid_chars)]
         potential_words = [word for word in potential_words if self._contains_valid_char_pos(word, self.evaluation_state['verified_values'])]
         potential_words = [word for word in potential_words if not self._contains_invalid_letter(word, invalid_chars)]
+        # TODO: Add back in rule out known bad positions
 
         self.words = potential_words
 
